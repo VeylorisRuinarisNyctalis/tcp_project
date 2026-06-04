@@ -40,4 +40,7 @@ public:
 
         return ADDR;
     }
+    socklen_t getSockAddrLen() const {
+        return sizeof(sockaddr_in);
+    }
 }:
