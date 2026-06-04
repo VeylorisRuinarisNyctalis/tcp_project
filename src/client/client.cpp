@@ -42,18 +42,20 @@ public:
             return;
         }
 
-        cout << "Enter Message: ";
-        string message;
-        getline(cin, message);
+        while (true) {
+            cout << "Enter Message: ";
+            string message;
+            getline(cin, message);
 
-        sendData(SOCKET_FD, message);
+            sendData(SOCKET_FD, message);
 
-        string response = receiveData(SOCKET_FD);
+            string response = receiveData(SOCKET_FD);
 
-        if (!response.empty()) {
-            cout << "Response: "
-                 << response
-                 << std::endl;
+            if (!response.empty()) {
+                cout << "Response: "
+                     << response
+                     << std::endl;
+            }
         }
 
         closeSocket(SOCKET_FD);

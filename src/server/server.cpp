@@ -101,17 +101,19 @@ public:
             return;
         }
 
-        string message = receiveData(CLIENT_SOCKET_FD);
+        while (true) {
+            string message = receiveData(CLIENT_SOCKET_FD);
 
-        cout << "Request: "
-             << message
-             << endl;
+            cout << "Request: "
+                 << message
+                 << endl;
 
-        cout << "Enter Reply: ";
-        string reply;
-        getline(cin, reply);
+            cout << "Enter Reply: ";
+            string reply;
+            getline(cin, reply);
 
-        sendData(CLIENT_SOCKET_FD, reply);
+            sendData(CLIENT_SOCKET_FD, reply);
+        }
 
         closeSocket(CLIENT_SOCKET_FD);
     }
