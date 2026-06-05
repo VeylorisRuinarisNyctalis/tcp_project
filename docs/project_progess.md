@@ -1,49 +1,47 @@
 # TCP Client/Server Project
 
-## Project Goal
+## Goal
 
-Build a modular TCP Client/Server networking framework in C++ using IPv4 sockets and localhost communication (`127.0.0.1`).
+Build a modular TCP Client/Server networking framework in C++ using IPv4 sockets and localhost (`127.0.0.1`).
 
-The project is designed not only to understand the complete TCP socket lifecycle but also to establish a scalable architecture capable of supporting:
+Designed to progressively support:
 
-- Multiple Clients
-- Threading and Concurrency
-- Connection Management
-- Packet-Based Communication
-- Heartbeat Monitoring
-- File Transfer
-- Chat Applications
-
----
-
-# Current Project Structure
-
-```text
-project/
-│
-├── socket.hpp
-├── endpoint.hpp
-├── connection.hpp
-├── server.hpp
-└── client.hpp
-```
+- Multiple clients
+- Threading & concurrency
+- Connection management
+- Packet-based communication
+- Heartbeat monitoring
+- File transfer
+- Chat applications
 
 ---
 
 # Current Architecture
 
+```text
+Socket
+    ↓
+Endpoint
+    ↓
+Connection
+    ↓
+Client / Server
+```
+
+---
+
 ## Socket
 
-Encapsulates socket descriptor ownership and lifecycle management.
+Encapsulates socket file descriptor lifecycle.
 
-### Responsibilities
+Responsibilities:
 
-- Socket creation
-- Socket cleanup
-- Socket validation
-- File descriptor access
+- Create socket
+- Close socket
+- Validate socket
+- Manage FD ownership
 
-### Public Interface
+Interface:
 
 ```cpp
 createSocket()
@@ -61,21 +59,21 @@ isValid()
 
 Represents a network endpoint.
 
-### Stores
+Stores:
 
 ```text
 IP Address
 Port
 ```
 
-### Responsibilities
+Responsibilities:
 
-- Store endpoint information
-- Validate IPv4 addresses
-- Convert endpoint data into `sockaddr_in`
-- Construct endpoint information from received socket addresses
+- IPv4 validation
+- sockaddr_in conversion
+- Construct from sockaddr_in
+- Provide endpoint metadata
 
-### Public Interface
+Interface:
 
 ```cpp
 getIPAddress()
@@ -92,23 +90,19 @@ isValidIP()
 
 Represents an active TCP connection.
 
-### Composition
-
 ```text
 Connection
-│
 ├── Socket
 └── Endpoint
 ```
 
-### Responsibilities
+Responsibilities:
 
-- Store connection socket
-- Store remote endpoint information
+- Own socket + endpoint
 - Send data
 - Receive data
 
-### Public Interface
+Interface:
 
 ```cpp
 sendData()
@@ -122,85 +116,57 @@ getEndpoint()
 
 ## Server
 
-Represents the listening side of the TCP application.
-
-### Composition
+Listening side of the system.
 
 ```text
 Server
-│
 ├── Listening Socket
 └── Endpoint
 ```
 
-### Responsibilities
+Responsibilities:
 
-- Create listening socket
-- Bind socket
-- Listen for incoming connections
-- Accept client connections
+- Create/bind/listen socket
+- Accept incoming connections
 
-### Public Interface
+Interface:
 
 ```cpp
 createListenSocket()
 bindListenSocket()
 
 startListening()
-
 acceptConnection()
-```
-
-### Connection Acceptance Flow
-
-```text
-Listening Socket
-        │
-        ▼
-    accept()
-        │
-        ▼
-   Connection
-      │
-      ├── Socket
-      └── Endpoint
 ```
 
 ---
 
 ## Client
 
-Represents the connecting side of the TCP application.
-
-### Composition
+Connecting side of the system.
 
 ```text
 Client
-│
 └── Connection
-    │
-    ├── Socket
-    └── Endpoint
 ```
 
-### Responsibilities
+Responsibilities:
 
 - Create client socket
 - Connect to server
 
-### Public Interface
+Interface:
 
 ```cpp
 createClientSocket()
-
 connectToServer()
 ```
 
 ---
 
-# TCP Socket Lifecycle
+# TCP Lifecycle
 
-## Server Side
+## Server
 
 ```text
 socket()
@@ -216,9 +182,7 @@ send()/recv()
 close()
 ```
 
----
-
-## Client Side
+## Client
 
 ```text
 socket()
@@ -232,86 +196,75 @@ close()
 
 ---
 
-# Current Communication Flow
+# Communication Flow
 
 ```text
 Client
-    │
-    ▼
+    ↓
 connect()
-    │
-    ▼
-Server Listening Socket
-    │
-    ▼
+    ↓
+Server Listener
+    ↓
 accept()
-    │
-    ▼
-Connection Object
-    │
-    ├── Socket
-    └── Endpoint
-    │
-    ▼
-sendData()/receiveData()
+    ↓
+Connection (Socket + Endpoint)
+    ↓
+sendData() / receiveData()
 ```
 
 ---
 
-# Current Implementation Status
+# Current Status
 
-## Socket
+Implemented:
 
 ```text
-✓ createSocket()
-✓ closeSocket()
-✓ getFD()
-✓ setFD()
-✓ isValid()
-✓ Automatic cleanup through destructor
+✓ Socket abstraction (create/close/FD management)
+✓ Endpoint abstraction (IPv4 + sockaddr_in conversion)
+✓ Connection abstraction (send/receive over socket)
+✓ Server (listen + accept loop with per-client handling flow)
+✓ Client (connect + retry loop + request/response loop skeleton)
 ```
 
----
+### 🧠 Latest Updates Integrated
 
-## Endpoint
+The system now reflects **fully defined internal class APIs and runtime loops**:
+
+- `Socket` now explicitly supports:
+    - constructor overloads
+    - FD setter/getter
+    - lifecycle + validation
+
+- `Endpoint` now supports:
+    - `sockaddr_in` conversion constructor
+    - structured IP/port access
+    - validation layer for IPv4 correctness
+
+- `Connection` now includes:
+    - dual constructors (IP-based + raw socket-based)
+    - bidirectional data API (`sendData`, `receiveData`)
+    - full ownership accessors
+
+- Runtime behavior now clearly defined:
+
+### Client Loop Behavior
 
 ```text
-✓ IP Address Storage
-✓ Port Storage
-✓ IPv4 Validation
-✓ sockaddr_in Conversion
-✓ Endpoint Construction from sockaddr_in
+connect retry loop
+    ↓
+continuous request-response cycle
+    ↓
+disconnect handling (planned)
 ```
 
----
-
-## Connection
+### Server Loop Behavior
 
 ```text
-✓ Socket Ownership
-✓ Endpoint Ownership
-✓ sendData()
-✓ receiveData()
-```
-
----
-
-## Server
-
-```text
-✓ createListenSocket()
-✓ bindListenSocket()
-✓ startListening()
-✓ acceptConnection()
-```
-
----
-
-## Client
-
-```text
-✓ createClientSocket()
-✓ connectToServer()
+accept loop
+    ↓
+per-client connection handling loop
+    ↓
+request processing + reply cycle
 ```
 
 ---
@@ -341,132 +294,85 @@ tcp-project/
 │       └── helpers.hpp
 │
 ├── src/
+│   ├── client/
+│   │   └── client.cpp
+│   ├── server/
+│   │   └── server.cpp
+│   │
+│   └── core/network/
+│       ├── socket.cpp
+│       ├── endpoint.cpp
+│       └── connection.cpp
 │
 ├── apps/
 │   ├── server_main.cpp
 │   └── client_main.cpp
 │
 ├── tests/
-│
 ├── docs/
-│
 ├── build/
-│
 ├── Makefile
-│
 └── README.md
 ```
 
 ---
 
-# Why This Architecture?
-
-Future milestones will significantly increase project complexity:
+# Scaling Roadmap
 
 ```text
 Multiple Clients
-        ↓
-Threading
-        ↓
+    ↓
+std::thread
+    ↓
 Client Manager
-        ↓
+    ↓
 Packet Protocol
-        ↓
-Heartbeat Detection
-        ↓
+    ↓
+Heartbeat System
+    ↓
 File Transfer
-        ↓
+    ↓
 Chat System
 ```
 
-The architecture separates:
+Architecture separation goals:
 
-- Socket Management
-- Endpoint Management
-- Connection Handling
-- Server Logic
-- Client Logic
+- Socket management
+- Endpoint management
+- Connection handling
+- Server logic
+- Client logic
 
-allowing the project to scale without concentrating all networking functionality into a single class.
-
----
-
-# Upcoming Mentor Requirements
-
-The following milestones represent the next set of requirements and enhancements for the TCP Client/Server framework.
-
-## 1. Connection Failure Detection
-
-The client should be capable of detecting connection failures after a successful connection has been established, including:
-
-```text
-Server crash
-Server disconnect
-Server timeout
-```
+This avoids a monolithic networking design and keeps future concurrency safe.
 
 ---
 
-## 2. Client Failure Detection
+# Upcoming Requirements
 
-The server should be capable of detecting client-side failures after a successful connection has been established, including:
+1. Connection failure detection
+    - server crash
+    - server disconnect
+    - server timeout
 
-```text
-Client crash
-Client disconnect
-Client timeout
-```
+2. Client failure detection
+    - client crash
+    - client disconnect
+    - client timeout
 
----
+3. Continuous message exchange
 
-## 3. Multiple Message Exchange
+4. Multi-client support
 
-Support continuous communication between the client and server, allowing multiple messages to be sent and received during a single connection session.
+5. std::thread concurrency
 
----
+6. Heartbeat monitoring
 
-## 4. Multiple Client Support
+7. Persistent server/client processes
 
-Extend the server architecture to handle multiple simultaneous client connections.
-
----
-
-## 5. std::thread Concurrency
-
-Introduce multithreading using `std::thread` to enable concurrent client handling and improve scalability.
+8. Blocking vs non-blocking I/O
 
 ---
 
-## 6. Heartbeat / Failure Monitoring
+# Summary
 
-Implement heartbeat mechanisms to actively monitor connection health and detect unresponsive peers.
-
----
-
-## 7. Persistent Server and Client Processes
-
-Design the server and client applications to run continuously until explicitly terminated, rather than exiting after a single interaction.
-
----
-
-## 8. Blocking and Non-Blocking I/O
-
-Explore and implement both blocking and non-blocking socket operations, including buffer management considerations and their impact on application behavior.
-
-# Current Status Summary
-
-Successfully implemented and refactored a TCP Client/Server application using localhost communication.
-
-Current architecture separates:
-
-```text
-Socket
-    ↓
-Endpoint
-    ↓
-Connection
-    ↓
-Client / Server
-```
-
-and provides a foundation for future multi-client, threaded, and production-style networking features.
+A modular TCP Client/Server framework with a clean separation of networking concerns, now upgraded with **explicit class-level design definitions and runtime loop architecture**, preparing the system for multi-client concurrency and protocol-level expansion.
