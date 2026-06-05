@@ -14,7 +14,9 @@ public:
     Socket() : SOCKET_FD(-1) {}
     Socket(int socket_fd) : SOCKET_FD(socket_fd) {}
 
-    ~Socket() = default;
+    ~Socket() {
+        closeSocket();
+    };
 
     // Returns true, if creates Socket, else false
     bool createSocket() {

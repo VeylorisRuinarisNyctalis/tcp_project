@@ -16,7 +16,7 @@ protected:
 
 public:
     Connection() = default;
-    Connection(const string& ip, const int& port)
+    Connection(const std::string& ip, int port)
         : ENDPOINT(ip, port) {}
     Connection(int socket_fd, const sockaddr_in& addr)
         : ENDPOINT(addr), SOCKET(socket_fd) {}
@@ -30,10 +30,16 @@ public:
     const Socket& getSocket() const {
         return SOCKET;
     }
+    Endpoint& getEndpoint() {
+        return ENDPOINT;
+    }
+    Socket& getSocket() {
+        return SOCKET;
+    }
 
     // Data transfer
     bool sendData(const std::string& message) {
-        if (!SOCKET.isValid()) {
+        if (!isValid()) {
             return false;
         }
 
@@ -46,7 +52,7 @@ public:
         return sent != -1;
     }
     std::string receiveData() {
-        if (!SOCKET.isValid()) {
+        if (!isValid()) {
             return "";
         }
 
@@ -58,10 +64,15 @@ public:
             sizeof(buffer),
             0);
 
-        if (bytes <= 0) {
+        if (bytes == 0) {
             return "";
         }
 
         return std::string(buffer, bytes);
+    }
+
+    // Helpers
+    bool isValid() const {
+        return ENDPOINT.isValidIP() && SOCKET.isValid();
     }
 };
