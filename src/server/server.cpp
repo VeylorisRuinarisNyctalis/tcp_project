@@ -2,7 +2,31 @@
 
 #include <unistd.h>
 
+#include <thread>
+
 #include "connection.hpp"
+
+void Server::handleClient(Connection conn) {
+    while (true) {
+        std::string request = conn.receiveData();
+
+        if (
+            request == "NOT-EXISTS" ||
+            request == "DISCONNECTED" ||
+            request == "FAILED") {
+            std::cout << "Client Disconnected" << std::endl;
+            break;
+        }
+
+        cout << "Request: " << request << std::endl;
+
+        std::string reply;
+        std::cout << "Enter Reply: ";
+        std::getline(std::cin, reply);
+
+        conn.sendData(reply);
+    }
+}
 
 void Server::run() {
     createListenSocket();
@@ -24,24 +48,6 @@ void Server::run() {
         std::cout << "Client connected" << std::endl;
 
         // Messaging Client
-        while (true) {
-            std::string request = conn.receiveData();
-
-            if (
-                request == "NOT-EXISTS" ||
-                request == "DISCONNECTED" ||
-                request == "FAILED") {
-                std::cout << "Client Disconnected" << std::endl;
-                break;
-            }
-
-            cout << "Request: " << request << std::endl;
-
-            std::string reply;
-            std::cout << "Enter Reply: ";
-            std::getline(std::cin, reply);
-
-            conn.sendData(reply);
-        }
+        std::thread(&Server::handleClient, this, std::move(conn)).detach();
     }
 }

@@ -25,6 +25,7 @@ void Client::run() {
             std::string response = getConnection().receiveData();
 
             if (
+                response.empty() ||
                 response == "NOT-EXISTS" ||
                 response == "DISCONNECTED" ||
                 response == "FAILED") {
