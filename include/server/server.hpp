@@ -15,7 +15,7 @@ private:
 
 public:
     Server() = default;
-    Server(const string& ip, uint16_t port) : ENDPOINT(ip, port) {}
+    Server(const std::string& ip, uint16_t port) : ENDPOINT(ip, port) {}
 
     ~Server() = default;
 

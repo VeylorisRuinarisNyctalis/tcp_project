@@ -43,17 +43,26 @@ public:
             return false;
         }
 
-        ssize_t sent = send(
-            SOCKET.getFD(),
-            message.data(),
-            message.size(),
-            0);
+        ssize_t total = 0;
+        while (total < message.size()) {
+            ssize_t sent = send(
+                SOCKET.getFD(),
+                message.data(),
+                message.size(),
+                0);
+
+            if (sent <= 0) {
+                return false;
+            }
+
+            total += sent;
+        }
 
         return sent != -1;
     }
     std::string receiveData() {
         if (!isValid()) {
-            return "";
+            throw std::runtime_error("invalid socket");
         }
 
         char buffer[1024];
@@ -64,15 +73,13 @@ public:
             sizeof(buffer),
             0);
 
+        if (bytes == -1) {
+            throw std::runtime_error("recv failed");
+        }
         if (bytes == 0) {
             return "";
         }
 
         return std::string(buffer, bytes);
-    }
-
-    // Helpers
-    bool isValid() const {
-        return ENDPOINT.isValidIP() && SOCKET.isValid();
     }
 };

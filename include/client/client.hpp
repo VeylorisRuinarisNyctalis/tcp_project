@@ -17,13 +17,22 @@ public:
 
     ~Client() = default;
 
+    // Getters
+    const Connection& getConnection() const {
+        return CONNECTION;
+    }
+    Connection& getConnection() {
+        return CONNECTION;
+    }
+
     // Lifecycle
     bool createClientSocket() {
         return CONNECTION.getSocket().createSocket();
     }
 
     bool connectToServer() {
-        if (!CONNECTION.isValid()) {
+        if (!CONNECTION.getEndpoint().isValidIP() ||
+            !CONNECTION.getSocket().isValid()) {
             return false;
         }
 
