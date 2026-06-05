@@ -12,14 +12,16 @@ int main() {
     Connection conn = server.acceptConnection();
 
     // Messaging
-    std::string request = conn.receiveData();
-    cout << "Request: " << request << std::endl;
+    while (true) {
+        std::string request = conn.receiveData();
+        cout << "Request: " << request << std::endl;
 
-    std::string reply;
-    std::cout << "Enter Reply: ";
-    getline(std::cin, reply);
+        std::string reply;
+        std::cout << "Enter Reply: ";
+        std::getline(std::cin, reply);
 
-    conn.sendData(reply);
+        conn.sendData(reply);
+    }
 
     return 0;
 }

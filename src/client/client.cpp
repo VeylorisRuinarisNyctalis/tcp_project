@@ -7,15 +7,17 @@ int main() {
     client.connectToServer();
 
     // Messaging
-    std::string request;
-    std::cout << "Enter Request: ";
-    getline(std::cin, request);
+    while (true) {
+        std::string request;
+        std::cout << "Enter Request: ";
+        std::getline(std::cin, request);
 
-    client.getConnection().sendData(request);
+        client.getConnection().sendData(request);
 
-    std::string response = client.getConnection().receiveData();
+        std::string response = client.getConnection().receiveData();
 
-    cout << "Response: " << response << std::endl;
+        cout << "Response: " << response << std::endl;
+    }
 
     return 0;
 }
