@@ -52,7 +52,7 @@ public:
     }
 
     // Helpers
-    bool isValid() {
+    bool isValid() const {
         return SOCKET_FD != -1;
     }
 };
