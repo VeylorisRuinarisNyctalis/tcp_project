@@ -4,16 +4,14 @@
 
 #include "connection.hpp"
 
-int main() {
-    Server server("127.0.0.1", 8080);
-
-    server.createListenSocket();
-    server.bindListenSocket();
-    server.startListening();
+void Server::run() {
+    createListenSocket();
+    bindListenSocket();
+    startListening();
 
     while (true) {
         // Accepting Clients
-        Connection conn = server.acceptConnection();
+        Connection conn = acceptConnection();
 
         if (!conn.getSocket().isValid()) {
             std::cerr << "No client connected" << std::endl
@@ -46,6 +44,4 @@ int main() {
             conn.sendData(reply);
         }
     }
-
-    return 0;
 }

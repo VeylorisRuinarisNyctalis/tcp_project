@@ -2,14 +2,12 @@
 
 #include <unistd.h>
 
-int main() {
-    Client client("127.0.0.1", 8080);
-
-    client.createClientSocket();
+void Client::run() {
+    createClientSocket();
 
     while (true) {
         // Connecting to Server
-        while (!client.connectToServer()) {
+        while (!connectToServer()) {
             std::cerr << "could not connect to server" << std::endl
                       << "Retrying in 5 seconds..." << std::endl;
 
@@ -22,9 +20,9 @@ int main() {
             std::cout << "Enter Request: ";
             std::getline(std::cin, request);
 
-            client.getConnection().sendData(request);
+            getConnection().sendData(request);
 
-            std::string response = client.getConnection().receiveData();
+            std::string response = getConnection().receiveData();
 
             if (
                 response == "NOT-EXISTS" ||
@@ -37,7 +35,4 @@ int main() {
             cout << "Response: " << response << std::endl;
         }
     }
-}
-
-return 0;
 }
