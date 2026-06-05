@@ -17,7 +17,7 @@ protected:
 public:
     Connection() = default;
     Connection(const string& ip, const int& port)
-        : ENDPOINT(IP, PORT) {}
+        : ENDPOINT(ip, port) {}
     Connection(int socket_fd, const sockaddr_in& addr)
         : ENDPOINT(addr), SOCKET(socket_fd) {}
 
