@@ -9,17 +9,17 @@ int main() {
     server.bindListenSocket();
     server.startListening();
 
-    Connection CONNECTION = server.acceptConnection();
+    Connection conn = server.acceptConnection();
 
     // Messaging
-    std::string request = CONNECTION.receiveData();
+    std::string request = conn.receiveData();
     cout << "Request: " << request << std::endl;
 
     std::string reply;
     std::cout << "Enter Reply: ";
     getline(std::cin, reply);
 
-    CONNECTION.sendData(reply);
+    conn.sendData(reply);
 
     return 0;
 }

@@ -1,21 +1,21 @@
 #include "client.hpp"
 
 int main() {
-    Client CLIENT("127.0.0.1", 9090);
+    Client client("127.0.0.1", 9090);
 
-    CLIENT.createClientSocket();
-    CLIENT.connectToServer();
+    client.createClientSocket();
+    client.connectToServer();
 
     // Messaging
     std::string request;
     std::cout << "Enter Request: ";
     getline(std::cin, request);
 
-    CLIENT.getConnection().sendData(request);
+    client.getConnection().sendData(request);
 
-    std::string response = CLIENT.getConnection().receiveData();
+    std::string response = client.getConnection().receiveData();
 
-    cout << "Request: " << request << std::endl;
+    cout << "Response: " << response << std::endl;
 
     return 0;
 }
