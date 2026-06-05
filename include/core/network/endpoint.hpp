@@ -50,9 +50,6 @@ public:
             &ADDR.sin_addr);
         return ADDR;
     }
-    socklen_t getSockAddrLen() const {
-        return sizeof(sockaddr_in);
-    }
 
     bool isValidIP() const {
         sockaddr_in addr;
