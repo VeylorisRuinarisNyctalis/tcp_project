@@ -1,0 +1,8 @@
+These are my refactored files... 
+
+socket.hpp {}
+endpoint.hpp {}
+connection.hpp {}
+
+server.hpp {}
+clinet.hpp {}
