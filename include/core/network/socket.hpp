@@ -21,6 +21,7 @@ public:
     // Returns true, if creates Socket, else false
     bool createSocket() {
         if (isValid()) {
+            std::cerr << "Socket already created." << std::endl;
             return false;
         }
 
@@ -36,6 +37,7 @@ public:
     // Returns true, if closes an existing Socket, else false
     bool closeSocket() {
         if (!isValid()) {
+            std::cerr << "Socket not created." << std::endl;
             return false;
         }
 

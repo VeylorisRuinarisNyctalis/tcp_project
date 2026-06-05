@@ -39,7 +39,8 @@ public:
 
     // Data transfer
     bool sendData(const std::string& message) {
-        if (!isValid()) {
+        if (!SOCKET.isValid()) {
+            std::cerr << "Socket not created." << std::endl;
             return false;
         }
 
@@ -47,22 +48,24 @@ public:
         while (total < message.size()) {
             ssize_t sent = send(
                 SOCKET.getFD(),
-                message.data(),
-                message.size(),
+                message.data() + total,
+                message.size() - total,
                 0);
 
             if (sent <= 0) {
+                std::cerr << "Message not sent." << std::endl;
                 return false;
             }
 
             total += sent;
         }
 
-        return sent != -1;
+        return true;
     }
     std::string receiveData() {
-        if (!isValid()) {
-            throw std::runtime_error("invalid socket");
+        if (!SOCKET.isValid()) {
+            std::cerr << "Socket not created." << std::endl;
+            return "NOT-EXISTS";
         }
 
         char buffer[1024];
@@ -74,10 +77,11 @@ public:
             0);
 
         if (bytes == -1) {
-            throw std::runtime_error("recv failed");
+            std::cerr << "recv failed." << std::endl;
+            return "FAILED";
         }
         if (bytes == 0) {
-            return "";
+            return "DISCONNECTED";
         }
 
         return std::string(buffer, bytes);

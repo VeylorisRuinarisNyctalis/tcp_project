@@ -1,9 +1,11 @@
 #include "server.hpp"
 
+#include <unistd.h>
+
 #include "connection.hpp"
 
 int main() {
-    Server server("127.0.0.1", 9090);
+    Server server("127.0.0.1", 8080);
 
     server.createListenSocket();
     server.bindListenSocket();
@@ -14,6 +16,15 @@ int main() {
     // Messaging
     while (true) {
         std::string request = conn.receiveData();
+
+        if (
+            request == "NOT-EXISTS" ||
+            request == "DISCONNECTED" ||
+            request == "FAILED") {
+            std::cout << "Client Not Connected" << std::endl;
+            break;
+        }
+
         cout << "Request: " << request << std::endl;
 
         std::string reply;

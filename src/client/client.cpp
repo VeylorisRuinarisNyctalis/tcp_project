@@ -1,7 +1,9 @@
 #include "client.hpp"
 
+#include <unistd.h>
+
 int main() {
-    Client client("127.0.0.1", 9090);
+    Client client("127.0.0.1", 8080);
 
     client.createClientSocket();
     client.connectToServer();
@@ -16,8 +18,17 @@ int main() {
 
         std::string response = client.getConnection().receiveData();
 
-        cout << "Response: " << response << std::endl;
+        if (
+            response == "NOT-EXISTS" ||
+            response == "DISCONNECTED" ||
+            response == "FAILED") {
+            std::cout << "Server Not Connected" << std::endl;
+            break;
+        }
     }
 
-    return 0;
+    cout << "Response: " << response << std::endl;
+}
+
+return 0;
 }
