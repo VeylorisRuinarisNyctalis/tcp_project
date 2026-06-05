@@ -11,27 +11,40 @@ int main() {
     server.bindListenSocket();
     server.startListening();
 
-    Connection conn = server.acceptConnection();
-
-    // Messaging
     while (true) {
-        std::string request = conn.receiveData();
+        // Accepting Clients
+        Connection conn = server.acceptConnection();
 
-        if (
-            request == "NOT-EXISTS" ||
-            request == "DISCONNECTED" ||
-            request == "FAILED") {
-            std::cout << "Client Not Connected" << std::endl;
-            break;
+        if (!conn.getSocket().isValid()) {
+            std::cerr << "No client connected" << std::endl
+                      << "Retrying in 5 seconds..." << std::endl;
+
+            sleep(5);
+            continue;
         }
 
-        cout << "Request: " << request << std::endl;
+        std::cout << "Client connected" << std::endl;
 
-        std::string reply;
-        std::cout << "Enter Reply: ";
-        std::getline(std::cin, reply);
+        // Messaging Client
+        while (true) {
+            std::string request = conn.receiveData();
 
-        conn.sendData(reply);
+            if (
+                request == "NOT-EXISTS" ||
+                request == "DISCONNECTED" ||
+                request == "FAILED") {
+                std::cout << "Client Disconnected" << std::endl;
+                break;
+            }
+
+            cout << "Request: " << request << std::endl;
+
+            std::string reply;
+            std::cout << "Enter Reply: ";
+            std::getline(std::cin, reply);
+
+            conn.sendData(reply);
+        }
     }
 
     return 0;

@@ -6,28 +6,37 @@ int main() {
     Client client("127.0.0.1", 8080);
 
     client.createClientSocket();
-    client.connectToServer();
 
-    // Messaging
     while (true) {
-        std::string request;
-        std::cout << "Enter Request: ";
-        std::getline(std::cin, request);
+        // Connecting to Server
+        while (!client.connectToServer()) {
+            std::cerr << "could not connect to server" << std::endl
+                      << "Retrying in 5 seconds..." << std::endl;
 
-        client.getConnection().sendData(request);
+            sleep(5);
+        }
 
-        std::string response = client.getConnection().receiveData();
+        // Messaging Server
+        while (true) {
+            std::string request;
+            std::cout << "Enter Request: ";
+            std::getline(std::cin, request);
 
-        if (
-            response == "NOT-EXISTS" ||
-            response == "DISCONNECTED" ||
-            response == "FAILED") {
-            std::cout << "Server Not Connected" << std::endl;
-            break;
+            client.getConnection().sendData(request);
+
+            std::string response = client.getConnection().receiveData();
+
+            if (
+                response == "NOT-EXISTS" ||
+                response == "DISCONNECTED" ||
+                response == "FAILED") {
+                std::cout << "Server disonnected" << std::endl;
+                break;
+            }
+
+            cout << "Response: " << response << std::endl;
         }
     }
-
-    cout << "Response: " << response << std::endl;
 }
 
 return 0;
