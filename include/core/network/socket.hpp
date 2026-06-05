@@ -12,20 +12,19 @@ protected:
 
 public:
     Socket() : SOCKET_FD(-1) {}
+    Socket(int socket_fd) : SOCKET_FD(socket_fd) {}
 
-    ~Socket() {
-        closeSocket();
-    }
+    ~Socket() = default;
 
     // Returns true, if creates Socket, else false
     bool createSocket() {
-        if (SOCKET_FD >= 0) {
+        if (isValid()) {
             return false;
         }
 
         SOCKET_FD = socket(AF_INET, SOCK_STREAM, 0);
 
-        if (SOCKET_FD < 0) {
+        if (!isValid()) {
             std::cerr << "Socket not created." << std::endl;
             return false;
         }
@@ -34,7 +33,7 @@ public:
     }
     // Returns true, if closes an existing Socket, else false
     bool closeSocket() {
-        if (SOCKET_FD < 0) {
+        if (!isValid()) {
             return false;
         }
 
@@ -47,5 +46,13 @@ public:
     // Returns the socket value
     int getFD() const {
         return this->SOCKET_FD;
+    }
+    void setFD(int socket_fd) {
+        SOCKET_FD = socket_fd;
+    }
+
+    // Helpers
+    bool isValid() {
+        return SOCKET_FD != -1;
     }
 };
