@@ -1,0 +1,39 @@
+# =========================
+# Build Directories
+# =========================
+
+build/
+cmake-build-*/
+
+# =========================
+# CMake
+# =========================
+
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# =========================
+# Executables
+# =========================
+
+client
+server
+*.exe
+*.out
+
+# =========================
+# VS Code
+# =========================
+
+.vscode/
+
+# =========================
+# OS Files
+# =========================
+
+.DS_Store
+Thumbs.db
