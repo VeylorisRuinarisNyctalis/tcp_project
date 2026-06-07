@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 
 #include <cstdint>
-#include <iostream>
+#include <stdexcept>
 #include <string>
 
 class Endpoint {
