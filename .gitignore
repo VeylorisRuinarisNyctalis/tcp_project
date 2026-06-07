@@ -37,3 +37,9 @@ server
 
 .DS_Store
 Thumbs.db
+
+# =========================
+# Cache Files
+# =========================
+
+.cache/
