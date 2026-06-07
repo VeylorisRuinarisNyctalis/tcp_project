@@ -6,8 +6,8 @@
 #include <iostream>
 #include <string>
 
-#include "endpoint.hpp"
-#include "socket.hpp"
+#include "core/network/endpoint.hpp"
+#include "core/network/socket.hpp"
 
 class Connection {
 protected:
@@ -42,7 +42,7 @@ public:
             return false;
         }
 
-        ssize_t total = 0;
+        size_t total = 0;
         while (total < message.size()) {
             ssize_t sent = send(
                 SOCKET.getFD(),

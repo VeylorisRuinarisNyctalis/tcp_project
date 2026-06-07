@@ -2,10 +2,9 @@
 
 #include <sys/socket.h>
 
-#include <iostream>
 #include <string>
 
-#include "connection.hpp"
+#include "core/network/connection.hpp"
 
 class Client {
 private:
@@ -43,4 +42,6 @@ public:
                    reinterpret_cast<sockaddr*>(&client_addr),
                    sizeof(client_addr)) != -1;
     }
+
+    void run();
 };

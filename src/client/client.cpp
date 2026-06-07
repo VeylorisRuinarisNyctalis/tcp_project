@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "client/client.hpp"
 
 #include <unistd.h>
 
@@ -33,7 +33,7 @@ void Client::run() {
                 break;
             }
 
-            cout << "Response: " << response << std::endl;
+            std::cout << "Response: " << response << std::endl;
         }
     }
 }

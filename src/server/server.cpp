@@ -1,24 +1,20 @@
-#include "server.hpp"
-
-#include <unistd.h>
+#include "server/server.hpp"
 
 #include <thread>
 
-#include "connection.hpp"
+#include "core/network/connection.hpp"
 
 void Server::handleClient(Connection conn) {
     while (true) {
         std::string request = conn.receiveData();
 
-        if (
-            request == "NOT-EXISTS" ||
-            request == "DISCONNECTED" ||
+        if (request == "NOT-EXISTS" || request == "DISCONNECTED" ||
             request == "FAILED") {
             std::cout << "Client Disconnected" << std::endl;
             break;
         }
 
-        cout << "Request: " << request << std::endl;
+        std::cout << "Request: " << request << std::endl;
 
         std::string reply;
         std::cout << "Enter Reply: ";

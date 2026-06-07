@@ -2,11 +2,9 @@
 
 #include <sys/socket.h>
 
-#include <iostream>
-
-#include "connection.hpp"
-#include "endpoint.hpp"
-#include "socket.hpp"
+#include "core/network/connection.hpp"
+#include "core/network/endpoint.hpp"
+#include "core/network/socket.hpp"
 
 class Server {
 private:
@@ -57,7 +55,7 @@ public:
 
         int client_fd = accept(
             LISTEN_SOCKET.getFD(),
-            reinterpret_cast<sockaddr> * (&client_addr),
+            reinterpret_cast<sockaddr*> (&client_addr),
             &addr_len);
 
         if (client_fd == -1) {
@@ -66,4 +64,7 @@ public:
 
         return Connection(client_fd, client_addr);
     }
+
+    void handleClient(Connection conn);
+    void run();
 };
