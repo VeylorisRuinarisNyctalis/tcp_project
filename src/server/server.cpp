@@ -1,49 +1,129 @@
 #include "server/server.hpp"
 
 #include <thread>
+#include <unistd.h>
 
 #include "core/network/connection.hpp"
 
 void Server::handleClient(Connection conn) {
-    while (true) {
-        std::string request = conn.receiveData();
+    std::cout
+        << "[Client "
+        << conn.getID()
+        << "] Handler thread started."
+        << std::endl;
 
-        if (request == "NOT-EXISTS" || request == "DISCONNECTED" ||
-            request == "FAILED") {
-            std::cout << "Client Disconnected" << std::endl;
+    while (true) {
+        ReceiveResult result =
+            conn.receiveData();
+
+        if (result.status != ReceiveStatus::Success) {
+            std::cout
+                << "[Client "
+                << conn.getID()
+                << "] Disconnected."
+                << std::endl;
+
             break;
         }
 
-        std::cout << "Request: " << request << std::endl;
+        std::string request =
+            result.data;
 
-        std::string reply;
-        std::cout << "Enter Reply: ";
-        std::getline(std::cin, reply);
+        std::cout
+            << "[Client "
+            << conn.getID()
+            << "] Request: "
+            << request
+            << std::endl;
 
-        conn.sendData(reply);
+        std::string reply =
+            "Echo: " + request;
+
+        if (!conn.sendData(reply)) {
+            std::cerr
+                << "[Client "
+                << conn.getID()
+                << "] Failed to send reply."
+                << std::endl;
+
+            break;
+        }
+
+        std::cout
+            << "[Client "
+            << conn.getID()
+            << "] Reply sent."
+            << std::endl;
     }
+
+    std::cout
+        << "[Client "
+        << conn.getID()
+        << "] Handler thread finished."
+        << std::endl;
 }
 
 void Server::run() {
-    createListenSocket();
-    bindListenSocket();
-    startListening();
+    std::cout
+        << "[Server] Starting server..."
+        << std::endl;
+
+    if (!createListenSocket()) {
+        std::cerr
+            << "[Server] Failed to create listening socket."
+            << std::endl;
+        return;
+    }
+
+    if (!bindListenSocket()) {
+        std::cerr
+            << "[Server] Failed to bind listening socket."
+            << std::endl;
+        return;
+    }
+
+    if (!startListening()) {
+        std::cerr
+            << "[Server] Failed to start listening."
+            << std::endl;
+        return;
+    }
+
+    std::cout
+        << "[Server] Entering accept loop."
+        << std::endl;
 
     while (true) {
-        // Accepting Clients
-        Connection conn = acceptConnection();
+        Connection conn =
+            acceptConnection();
 
         if (!conn.getSocket().isValid()) {
-            std::cerr << "No client connected" << std::endl
-                      << "Retrying in 5 seconds..." << std::endl;
+            std::cerr
+                << "[Server] acceptConnection() failed."
+                << std::endl;
+
+            std::cout
+                << "[Server] Retrying in 5 seconds..."
+                << std::endl;
 
             sleep(5);
             continue;
         }
 
-        std::cout << "Client connected" << std::endl;
+        std::cout
+            << "[Server] Client "
+            << conn.getID()
+            << " connected."
+            << std::endl;
 
-        // Messaging Client
-        std::thread(&Server::handleClient, this, std::move(conn)).detach();
+        std::thread(
+            &Server::handleClient,
+            this,
+            std::move(conn))
+            .detach();
+
+        std::cout
+            << "[Server] Client thread detached."
+            << std::endl;
     }
 }

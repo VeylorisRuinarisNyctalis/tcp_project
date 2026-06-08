@@ -1,27 +1,14 @@
 # =========================
-# Build Directories
-# =========================
-
-build/
-cmake-build-*/
-
-# =========================
 # CMake
 # =========================
 
-CMakeCache.txt
-CMakeFiles/
-CTestTestfile.cmake
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
+build/
+out/
 
 # =========================
 # Executables
 # =========================
 
-client
-server
 *.exe
 *.out
 

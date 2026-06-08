@@ -3,37 +3,107 @@
 #include <unistd.h>
 
 void Client::run() {
-    createClientSocket();
+    std::cout
+        << "[Client] Starting client..."
+        << std::endl;
 
     while (true) {
-        // Connecting to Server
+        if (!getConnection().getSocket().isValid()) {
+            if (!createClientSocket()) {
+                std::cerr
+                    << "[Client] Failed to create socket."
+                    << std::endl;
+
+                std::cout
+                    << "[Client] Retrying in 5 seconds..."
+                    << std::endl;
+
+                sleep(5);
+                continue;
+            }
+        }
+
+        std::cout
+            << "[Client] Entering connection loop."
+            << std::endl;
+
         while (!connectToServer()) {
-            std::cerr << "could not connect to server" << std::endl
-                      << "Retrying in 5 seconds..." << std::endl;
+            std::cerr
+                << "[Client] Could not connect to server."
+                << std::endl;
+
+            std::cout
+                << "[Client] Retrying in 5 seconds..."
+                << std::endl;
 
             sleep(5);
         }
 
-        // Messaging Server
+        std::cout
+            << "[Client] Connected. Entering messaging loop."
+            << std::endl;
+
         while (true) {
             std::string request;
-            std::cout << "Enter Request: ";
+
+            std::cout
+                << "Enter Request: ";
+
             std::getline(std::cin, request);
 
-            getConnection().sendData(request);
+            if (!std::cin) {
+                std::cerr
+                    << "[Client] Input stream error."
+                    << std::endl;
 
-            std::string response = getConnection().receiveData();
+                return;
+            }
 
-            if (
-                response.empty() ||
-                response == "NOT-EXISTS" ||
-                response == "DISCONNECTED" ||
-                response == "FAILED") {
-                std::cout << "Server disonnected" << std::endl;
+            if (request.empty()) {
+                std::cout
+                    << "[Client] Empty request entered."
+                    << std::endl;
+
+                continue;
+            }
+
+            if (!getConnection().sendData(request)) {
+                std::cerr
+                    << "[Client] Failed to send request."
+                    << std::endl;
+
                 break;
             }
 
-            std::cout << "Response: " << response << std::endl;
+            ReceiveResult response =
+                getConnection().receiveData();
+
+            if (response.status != ReceiveStatus::Success) {
+                std::cout
+                    << "[Client] Server disconnected."
+                    << std::endl;
+
+                break;
+            }
+
+            std::cout
+                << "[Client] Server response received."
+                << std::endl;
+
+            std::cout
+                << "Response: "
+                << response.data
+                << std::endl;
         }
+
+        std::cout
+            << "[Client] Connection lost."
+            << std::endl;
+
+        getConnection().getSocket().closeSocket();
+
+        std::cout
+            << "[Client] Returning to connection loop."
+            << std::endl;
     }
 }
