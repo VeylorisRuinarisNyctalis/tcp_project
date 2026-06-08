@@ -76,6 +76,8 @@ Responsibilities:
 Interface:
 
 ```cpp
+Endpoint(const sockaddr_in& addr)
+
 getIPAddress()
 getPort()
 
@@ -92,6 +94,7 @@ Represents an active TCP connection.
 
 ```text
 Connection
+├── ID
 ├── Socket
 └── Endpoint
 ```
@@ -99,14 +102,20 @@ Connection
 Responsibilities:
 
 - Own socket + endpoint
+- Track connection identity
 - Send data
 - Receive data
+- Report receive status
 
 Interface:
 
 ```cpp
+setID()
+
+getID()
+
 sendData()
-receiveData()
+receiveData() -> ReceiveResult
 
 getSocket()
 getEndpoint()
@@ -128,6 +137,8 @@ Responsibilities:
 
 - Create/bind/listen socket
 - Accept incoming connections
+- Handle each client in a detached worker thread
+- Echo requests back to connected clients
 
 Interface:
 
@@ -137,6 +148,8 @@ bindListenSocket()
 
 startListening()
 acceptConnection()
+handleClient()
+run()
 ```
 
 ---
@@ -154,12 +167,15 @@ Responsibilities:
 
 - Create client socket
 - Connect to server
+- Retry connection after failure
+- Run the interactive request/response loop
 
 Interface:
 
 ```cpp
 createClientSocket()
 connectToServer()
+run()
 ```
 
 ---
@@ -207,9 +223,11 @@ Server Listener
     ↓
 accept()
     ↓
-Connection (Socket + Endpoint)
+Detached handler thread
     ↓
-sendData() / receiveData()
+Connection (ID + Socket + Endpoint)
+    ↓
+sendData() / receiveData() -> ReceiveResult
 ```
 
 ---
@@ -219,19 +237,22 @@ sendData() / receiveData()
 Implemented:
 
 ```text
-✓ Socket abstraction (create/close/FD management)
-✓ Endpoint abstraction (IPv4 + sockaddr_in conversion)
-✓ Connection abstraction (send/receive over socket)
-✓ Server (listen + accept loop with per-client handling flow)
-✓ Client (connect + retry loop + request/response loop skeleton)
+✓ Socket abstraction (create/close/FD ownership, move-only semantics)
+✓ Endpoint abstraction (IPv4 validation, sockaddr_in conversion, raw-addr constructor)
+✓ Connection abstraction (ID + socket/endpoint ownership, sendData/receiveData via ReceiveResult)
+✓ Server runtime (bind/listen/accept loop with detached per-client echo handlers)
+✓ Client runtime (socket creation, reconnect loop, stdin request/response cycle)
+✓ CMake build targets for `tcp_core`, `server`, `client`, and test executables
+✓ CTest coverage for socket lifecycle, endpoint conversion, connection I/O, and client/server exchange
 ```
 
 ### 🧠 Latest Updates Integrated
 
-The system now reflects **fully defined internal class APIs and runtime loops**:
+The system now reflects concrete runtime behavior rather than just design sketches:
 
 - `Socket` now explicitly supports:
     - constructor overloads
+    - move semantics
     - FD setter/getter
     - lifecycle + validation
 
@@ -242,10 +263,16 @@ The system now reflects **fully defined internal class APIs and runtime loops**:
 
 - `Connection` now includes:
     - dual constructors (IP-based + raw socket-based)
+    - connection IDs and ownership accessors
     - bidirectional data API (`sendData`, `receiveData`)
-    - full ownership accessors
+    - `ReceiveResult` status reporting
 
 - Runtime behavior now clearly defined:
+    - threaded per-client server handling
+    - interactive client request/response loop
+    - reconnect-on-failure client flow with socket recreation
+    - reusable server bind setup via `SO_REUSEADDR`
+    - CTest-backed verification for core networking behavior
 
 ### Client Loop Behavior
 
@@ -254,7 +281,9 @@ connect retry loop
     ↓
 continuous request-response cycle
     ↓
-disconnect handling (planned)
+socket close on disconnect
+    ↓
+return to connection loop
 ```
 
 ### Server Loop Behavior
@@ -262,25 +291,30 @@ disconnect handling (planned)
 ```text
 accept loop
     ↓
-per-client connection handling loop
+detached per-client handler thread
     ↓
-request processing + reply cycle
+request processing + Echo: reply cycle
 ```
 
 ---
 
 # Future Architecture (Target)
 
+The current codebase already has the base networking layers in place; the target below is the next split for packet framing and shared utilities.
+
 ```text
 tcp-project/
 │
+├── CMakeLists.txt
 ├── include/
 │   │
 │   ├── core/
-│   │   ├── socket.hpp
-│   │   ├── endpoint.hpp
-│   │   ├── connection.hpp
-│   │   └── packet.hpp
+│   │   ├── network/
+│   │   │   ├── socket.hpp
+│   │   │   ├── endpoint.hpp
+│   │   │   └── connection.hpp
+│   │   └── protocol/
+│   │       └── receive_result.hpp
 │   │
 │   ├── server/
 │   │   ├── server.hpp
@@ -298,7 +332,6 @@ tcp-project/
 │   │   └── client.cpp
 │   ├── server/
 │   │   └── server.cpp
-│   │
 │   └── core/network/
 │       ├── socket.cpp
 │       ├── endpoint.cpp
@@ -309,10 +342,7 @@ tcp-project/
 │   └── client_main.cpp
 │
 ├── tests/
-├── docs/
-├── build/
-├── Makefile
-└── README.md
+└── docs/
 ```
 
 ---
@@ -342,37 +372,39 @@ Architecture separation goals:
 - Connection handling
 - Server logic
 - Client logic
+- Protocol framing
+- Client coordination
 
-This avoids a monolithic networking design and keeps future concurrency safe.
+Multiple clients and detached worker threads are already in place; the remaining roadmap centers on coordinated multi-client state, packet framing, heartbeats, transfer features, and richer messaging.
 
 ---
 
 # Upcoming Requirements
 
-1. Connection failure detection
+1. Connection failure detection and recovery
     - server crash
     - server disconnect
     - server timeout
 
-2. Client failure detection
+2. Client failure detection and recovery
     - client crash
     - client disconnect
     - client timeout
 
-3. Continuous message exchange
+3. Packet framing for continuous message exchange
 
-4. Multi-client support
+4. Dedicated client manager / shared connection registry
 
-5. std::thread concurrency
+5. Heartbeat monitoring
 
-6. Heartbeat monitoring
+6. File transfer support
 
-7. Persistent server/client processes
+7. Blocking vs non-blocking I/O strategy
 
-8. Blocking vs non-blocking I/O
+8. Persistent server/client process supervision
 
 ---
 
 # Summary
 
-A modular TCP Client/Server framework with a clean separation of networking concerns, now upgraded with **explicit class-level design definitions and runtime loop architecture**, preparing the system for multi-client concurrency and protocol-level expansion.
+A modular TCP Client/Server framework built with CMake, with a header-based socket/endpoint/connection layer, a threaded echo-style server, an interactive reconnecting client, and CTest coverage for the current networking flow. The remaining work is to add packet framing, heartbeat and transfer features, and coordinated client management.
