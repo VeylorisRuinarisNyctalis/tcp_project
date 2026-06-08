@@ -29,10 +29,7 @@ void Server::handleClient(Connection conn) {
             << request
             << std::endl;
 
-        std::string reply;
-
-        std::cout << "Enter Reply: ";
-        std::getline(std::cin, reply);
+        std::string reply= "Echo: " + request;
 
         if (!conn.sendData(reply)) {
             std::cerr
