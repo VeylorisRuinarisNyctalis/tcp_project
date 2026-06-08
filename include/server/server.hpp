@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <sys/socket.h>
 
 #include <iostream>
@@ -10,18 +11,22 @@
 
 class Server {
 private:
+    uint64_t nextID;
+
     Socket LISTEN_SOCKET;
     Endpoint ENDPOINT;
 
 public:
-    Server() {
+    Server()
+        : nextID(1) {
         std::cout
             << "[Server] Default server created."
             << std::endl;
     }
 
     Server(const std::string& ip, uint16_t port)
-        : ENDPOINT(ip, port) {
+        : nextID(1),
+          ENDPOINT(ip, port) {
         std::cout
             << "[Server] Server created for "
             << ip
@@ -30,14 +35,28 @@ public:
             << std::endl;
     }
 
+    // Disable copy
+    Server(const Server&) = delete;
+    Server& operator=(const Server&) = delete;
+
+    // Allow move
+    Server(Server&&) noexcept = default;
+    Server& operator=(Server&&) noexcept = default;
+
     ~Server() = default;
 
+    // =========================
     // Getters
+    // =========================
+
     const Socket& getListeningSocket() const {
         return LISTEN_SOCKET;
     }
 
+    // =========================
     // Server Lifecycle
+    // =========================
+
     bool createListenSocket() {
         std::cout
             << "[Server] Creating listening socket..."
@@ -124,7 +143,10 @@ public:
         return listening;
     }
 
-    // Clients Handling
+    // =========================
+    // Client Handling
+    // =========================
+
     Connection acceptConnection() {
         std::cout
             << "[Server] Waiting for client..."
@@ -146,16 +168,22 @@ public:
             return Connection();
         }
 
+        uint64_t clientID = nextID++;
+
         std::cout
-            << "[Server] Client accepted. FD: "
+            << "[Server] Client "
+            << clientID
+            << " accepted. FD: "
             << client_fd
             << std::endl;
 
         return Connection(
+            clientID,
             client_fd,
             client_addr);
     }
 
     void handleClient(Connection conn);
+
     void run();
 };

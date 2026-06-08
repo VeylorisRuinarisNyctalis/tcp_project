@@ -7,14 +7,26 @@ void Client::run() {
         << "[Client] Starting client..."
         << std::endl;
 
-    createClientSocket();
-
     while (true) {
+        if (!getConnection().getSocket().isValid()) {
+            if (!createClientSocket()) {
+                std::cerr
+                    << "[Client] Failed to create socket."
+                    << std::endl;
+
+                std::cout
+                    << "[Client] Retrying in 5 seconds..."
+                    << std::endl;
+
+                sleep(5);
+                continue;
+            }
+        }
+
         std::cout
             << "[Client] Entering connection loop."
             << std::endl;
 
-        // Connecting to Server
         while (!connectToServer()) {
             std::cerr
                 << "[Client] Could not connect to server."
@@ -31,23 +43,35 @@ void Client::run() {
             << "[Client] Connected. Entering messaging loop."
             << std::endl;
 
-        // Messaging Server
         while (true) {
             std::string request;
 
-            std::cout << "Enter Request: ";
+            std::cout
+                << "Enter Request: ";
+
             std::getline(std::cin, request);
+
+            if (!std::cin) {
+                std::cerr
+                    << "[Client] Input stream error."
+                    << std::endl;
+
+                return;
+            }
 
             if (request.empty()) {
                 std::cout
                     << "[Client] Empty request entered."
                     << std::endl;
+
+                continue;
             }
 
             if (!getConnection().sendData(request)) {
                 std::cerr
                     << "[Client] Failed to send request."
                     << std::endl;
+
                 break;
             }
 
@@ -55,10 +79,10 @@ void Client::run() {
                 getConnection().receiveData();
 
             if (
-                response.empty() ||
                 response == "NOT-EXISTS" ||
                 response == "DISCONNECTED" ||
                 response == "FAILED") {
+
                 std::cout
                     << "[Client] Server disconnected."
                     << std::endl;
@@ -75,6 +99,12 @@ void Client::run() {
                 << response
                 << std::endl;
         }
+
+        std::cout
+            << "[Client] Connection lost."
+            << std::endl;
+
+        getConnection().getSocket().closeSocket();
 
         std::cout
             << "[Client] Returning to connection loop."

@@ -7,45 +7,60 @@
 
 void Server::handleClient(Connection conn) {
     std::cout
-        << "[Server] Client handler thread started."
+        << "[Client "
+        << conn.getID()
+        << "] Handler thread started."
         << std::endl;
 
     while (true) {
-        std::string request = conn.receiveData();
+        std::string request =
+            conn.receiveData();
 
         if (
             request == "NOT-EXISTS" ||
             request == "DISCONNECTED" ||
             request == "FAILED") {
+
             std::cout
-                << "[Server] Client disconnected."
+                << "[Client "
+                << conn.getID()
+                << "] Disconnected."
                 << std::endl;
 
             break;
         }
 
         std::cout
-            << "[Server] Request received: "
+            << "[Client "
+            << conn.getID()
+            << "] Request: "
             << request
             << std::endl;
 
-        std::string reply= "Echo: " + request;
+        std::string reply =
+            "Echo: " + request;
 
         if (!conn.sendData(reply)) {
             std::cerr
-                << "[Server] Failed to send reply."
+                << "[Client "
+                << conn.getID()
+                << "] Failed to send reply."
                 << std::endl;
 
             break;
         }
 
         std::cout
-            << "[Server] Reply sent."
+            << "[Client "
+            << conn.getID()
+            << "] Reply sent."
             << std::endl;
     }
 
     std::cout
-        << "[Server] Client handler thread finished."
+        << "[Client "
+        << conn.getID()
+        << "] Handler thread finished."
         << std::endl;
 }
 
@@ -54,21 +69,38 @@ void Server::run() {
         << "[Server] Starting server..."
         << std::endl;
 
-    createListenSocket();
-    bindListenSocket();
-    startListening();
+    if (!createListenSocket()) {
+        std::cerr
+            << "[Server] Failed to create listening socket."
+            << std::endl;
+        return;
+    }
+
+    if (!bindListenSocket()) {
+        std::cerr
+            << "[Server] Failed to bind listening socket."
+            << std::endl;
+        return;
+    }
+
+    if (!startListening()) {
+        std::cerr
+            << "[Server] Failed to start listening."
+            << std::endl;
+        return;
+    }
 
     std::cout
         << "[Server] Entering accept loop."
         << std::endl;
 
     while (true) {
-        // Accepting Clients
-        Connection conn = acceptConnection();
+        Connection conn =
+            acceptConnection();
 
         if (!conn.getSocket().isValid()) {
             std::cerr
-                << "[Server] No client connected."
+                << "[Server] acceptConnection() failed."
                 << std::endl;
 
             std::cout
@@ -80,10 +112,11 @@ void Server::run() {
         }
 
         std::cout
-            << "[Server] Client connected."
+            << "[Server] Client "
+            << conn.getID()
+            << " connected."
             << std::endl;
 
-        // Messaging Client
         std::thread(
             &Server::handleClient,
             this,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <sys/socket.h>
 
 #include <iostream>
@@ -28,9 +29,20 @@ public:
             << std::endl;
     }
 
+    // Disable copy
+    Client(const Client&) = delete;
+    Client& operator=(const Client&) = delete;
+
+    // Allow move
+    Client(Client&&) noexcept = default;
+    Client& operator=(Client&&) noexcept = default;
+
     ~Client() = default;
 
+    // =========================
     // Getters
+    // =========================
+
     const Connection& getConnection() const {
         return CONNECTION;
     }
@@ -39,7 +51,10 @@ public:
         return CONNECTION;
     }
 
+    // =========================
     // Lifecycle
+    // =========================
+
     bool createClientSocket() {
         std::cout
             << "[Client] Creating client socket..."
@@ -70,6 +85,7 @@ public:
             std::cerr
                 << "[Client] Invalid IP address."
                 << std::endl;
+
             return false;
         }
 
@@ -77,17 +93,18 @@ public:
             std::cerr
                 << "[Client] Invalid socket."
                 << std::endl;
+
             return false;
         }
 
-        sockaddr_in client_addr =
+        sockaddr_in server_addr =
             CONNECTION.getEndpoint().getSockAddr();
 
         bool connected =
             connect(
                 CONNECTION.getSocket().getFD(),
-                reinterpret_cast<sockaddr*>(&client_addr),
-                sizeof(client_addr)) != -1;
+                reinterpret_cast<sockaddr*>(&server_addr),
+                sizeof(server_addr)) != -1;
 
         if (connected) {
             std::cout

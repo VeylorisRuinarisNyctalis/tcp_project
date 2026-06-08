@@ -20,6 +20,25 @@ public:
                   << SOCKET_FD << std::endl;
     }
 
+    // Disable Copy Constructors
+    Socket(const Socket&) = delete;
+    Socket& operator=(const Socket&) = delete;
+
+    // Enable Move Constructors
+    Socket(Socket&& other) noexcept {
+        SOCKET_FD= other.SOCKET_FD;
+        other.SOCKET_FD = -1;
+    }
+    Socket& operator=(Socket&& other) noexcept {
+        if (this != &other) {
+            closeSocket();
+
+            SOCKET_FD = other.SOCKET_FD;
+            other.SOCKET_FD = -1;
+        }
+        return *this;
+    }
+
     ~Socket() {
         std::cout << "[Socket] Destructor called for FD: "
                   << SOCKET_FD << std::endl;

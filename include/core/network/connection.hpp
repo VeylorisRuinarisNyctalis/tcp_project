@@ -1,28 +1,42 @@
 #pragma once
 
+#include <cstdint>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 #include "core/network/endpoint.hpp"
 #include "core/network/socket.hpp"
 
 class Connection {
 protected:
+    uint64_t ID;
     Endpoint ENDPOINT;
     Socket SOCKET;
 
 public:
-    Connection() {
+    Connection()
+        : ID(0) {
         std::cout
             << "[Connection] Default connection created."
             << std::endl;
     }
 
     Connection(const std::string& ip, int port)
-        : ENDPOINT(ip, port) {
+        : ID(0), ENDPOINT(ip, port) {
+        std::cout
+            << "[Connection] Created for "
+            << ENDPOINT.getIPAddress()
+            << ":"
+            << ENDPOINT.getPort()
+            << std::endl;
+    }
+
+    Connection(uint64_t id, const std::string& ip, int port)
+        : ID(id), ENDPOINT(ip, port) {
         std::cout
             << "[Connection] Created for "
             << ENDPOINT.getIPAddress()
@@ -32,7 +46,8 @@ public:
     }
 
     Connection(int socket_fd, const sockaddr_in& addr)
-        : ENDPOINT(addr),
+        : ID(0),
+          ENDPOINT(addr),
           SOCKET(socket_fd) {
         std::cout
             << "[Connection] Accepted connection from "
@@ -45,22 +60,78 @@ public:
             << std::endl;
     }
 
-    ~Connection() {
+    Connection(uint64_t id,
+               int socket_fd,
+               const sockaddr_in& addr)
+        : ID(id),
+          ENDPOINT(addr),
+          SOCKET(socket_fd) {
         std::cout
-            << "[Connection] Destroying connection for "
+            << "[Connection] Accepted connection from "
             << ENDPOINT.getIPAddress()
             << ":"
             << ENDPOINT.getPort()
+            << " (FD: "
+            << SOCKET.getFD()
+            << ")"
             << std::endl;
     }
 
-    // Getters
+    // Disable copy semantics
+    Connection(const Connection&) = delete;
+    Connection& operator=(const Connection&) = delete;
+
+    // Move constructor
+    Connection(Connection&& other) noexcept
+        : ID(other.ID),
+          ENDPOINT(std::move(other.ENDPOINT)),
+          SOCKET(std::move(other.SOCKET)) {
+        other.ID = 0;
+    }
+
+    // Move assignment
+    Connection& operator=(Connection&& other) noexcept {
+        if (this != &other) {
+            ID = other.ID;
+            ENDPOINT = std::move(other.ENDPOINT);
+            SOCKET = std::move(other.SOCKET);
+
+            other.ID = 0;
+        }
+
+        return *this;
+    }
+
+    ~Connection() {
+        std::cout
+            << "[Connection "
+            << ID
+            << "] Destroyed."
+            << std::endl;
+    }
+
+    // =========================
+    // Getters (const)
+    // =========================
+
+    const uint64_t& getID() const {
+        return ID;
+    }
+
     const Endpoint& getEndpoint() const {
         return ENDPOINT;
     }
 
     const Socket& getSocket() const {
         return SOCKET;
+    }
+
+    // =========================
+    // Getters (non-const)
+    // =========================
+
+    uint64_t& getID() {
+        return ID;
     }
 
     Endpoint& getEndpoint() {
@@ -71,7 +142,18 @@ public:
         return SOCKET;
     }
 
-    // Data transfer
+    // =========================
+    // Setters
+    // =========================
+
+    void setID(uint64_t id) {
+        ID = id;
+    }
+
+    // =========================
+    // Data Transfer
+    // =========================
+
     bool sendData(const std::string& message) {
         if (!SOCKET.isValid()) {
             std::cerr
@@ -81,7 +163,9 @@ public:
         }
 
         std::cout
-            << "[Connection] Sending "
+            << "[Connection "
+            << ID
+            << "] Sending "
             << message.size()
             << " bytes to "
             << ENDPOINT.getIPAddress()
@@ -100,8 +184,11 @@ public:
 
             if (sent <= 0) {
                 std::cerr
-                    << "[Connection] Send failed."
+                    << "[Connection "
+                    << ID
+                    << "] Send failed."
                     << std::endl;
+
                 return false;
             }
 
@@ -109,7 +196,9 @@ public:
         }
 
         std::cout
-            << "[Connection] Sent "
+            << "[Connection "
+            << ID
+            << "] Sent "
             << total
             << " bytes successfully."
             << std::endl;
@@ -122,6 +211,7 @@ public:
             std::cerr
                 << "[Connection] Invalid socket."
                 << std::endl;
+
             return "NOT-EXISTS";
         }
 
@@ -135,7 +225,9 @@ public:
 
         if (bytes == -1) {
             std::cerr
-                << "[Connection] recv() failed."
+                << "[Connection "
+                << ID
+                << "] recv() failed."
                 << std::endl;
 
             return "FAILED";
@@ -143,7 +235,9 @@ public:
 
         if (bytes == 0) {
             std::cout
-                << "[Connection] Peer disconnected: "
+                << "[Connection "
+                << ID
+                << "] Peer disconnected: "
                 << ENDPOINT.getIPAddress()
                 << ":"
                 << ENDPOINT.getPort()
@@ -153,7 +247,9 @@ public:
         }
 
         std::cout
-            << "[Connection] Received "
+            << "[Connection "
+            << ID
+            << "] Received "
             << bytes
             << " bytes from "
             << ENDPOINT.getIPAddress()
