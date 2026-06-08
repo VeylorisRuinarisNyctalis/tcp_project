@@ -18,6 +18,8 @@ add_compile_options(
     -Wpedantic
 )
 
+find_package(Threads REQUIRED)
+
 file(GLOB_RECURSE TCP_CORE_SOURCES
     CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
@@ -30,6 +32,11 @@ add_library(tcp_core STATIC
 target_include_directories(tcp_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(tcp_core
+    PUBLIC
+        Threads::Threads
 )
 
 add_executable(client
@@ -49,3 +56,30 @@ target_link_libraries(server
     PRIVATE
         tcp_core
 )
+
+enable_testing()
+
+set(TCP_TESTS
+    socket
+    endpoint
+    connection
+    server_client
+)
+
+foreach(test_name IN LISTS TCP_TESTS)
+    set(test_target test_${test_name})
+
+    add_executable(${test_target}
+        tests/${test_target}.cpp
+    )
+
+    target_link_libraries(${test_target}
+        PRIVATE
+            tcp_core
+    )
+
+    add_test(
+        NAME ${test_target}
+        COMMAND ${test_target}
+    )
+endforeach()
