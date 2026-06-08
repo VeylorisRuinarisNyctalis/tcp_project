@@ -32,11 +32,25 @@ void Client::run() {
                 << "[Client] Could not connect to server."
                 << std::endl;
 
+            getConnection().getSocket().closeSocket();
+
             std::cout
                 << "[Client] Retrying in 5 seconds..."
                 << std::endl;
 
             sleep(5);
+
+            if (!createClientSocket()) {
+                std::cerr
+                    << "[Client] Failed to create socket."
+                    << std::endl;
+
+                std::cout
+                    << "[Client] Retrying in 5 seconds..."
+                    << std::endl;
+
+                sleep(5);
+            }
         }
 
         std::cout

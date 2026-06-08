@@ -188,12 +188,18 @@ public:
         size_t total = 0;
 
         while (total < message.size()) {
+#ifdef MSG_NOSIGNAL
+            constexpr int send_flags = MSG_NOSIGNAL;
+#else
+            constexpr int send_flags = 0;
+#endif
+
             ssize_t sent =
                 send(
                     SOCKET.getFD(),
                     message.data() + total,
                     message.size() - total,
-                    0);
+                    send_flags);
 
             if (sent <= 0) {
                 std::cerr

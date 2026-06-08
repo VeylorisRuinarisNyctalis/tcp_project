@@ -66,6 +66,23 @@ public:
             LISTEN_SOCKET.createSocket();
 
         if (result) {
+            int reuseAddress = 1;
+
+            if (setsockopt(
+                    LISTEN_SOCKET.getFD(),
+                    SOL_SOCKET,
+                    SO_REUSEADDR,
+                    &reuseAddress,
+                    sizeof(reuseAddress)) == -1) {
+                std::cerr
+                    << "[Server] Failed to enable address reuse."
+                    << std::endl;
+
+                LISTEN_SOCKET.closeSocket();
+
+                return false;
+            }
+
             std::cout
                 << "[Server] Listening socket created. FD: "
                 << LISTEN_SOCKET.getFD()
