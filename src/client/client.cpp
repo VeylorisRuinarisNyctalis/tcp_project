@@ -75,14 +75,10 @@ void Client::run() {
                 break;
             }
 
-            std::string response =
+            ReceiveResult response =
                 getConnection().receiveData();
 
-            if (
-                response == "NOT-EXISTS" ||
-                response == "DISCONNECTED" ||
-                response == "FAILED") {
-
+            if (response.status != ReceiveStatus::Success) {
                 std::cout
                     << "[Client] Server disconnected."
                     << std::endl;
@@ -96,7 +92,7 @@ void Client::run() {
 
             std::cout
                 << "Response: "
-                << response
+                << response.data
                 << std::endl;
         }
 

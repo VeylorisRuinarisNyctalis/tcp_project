@@ -10,6 +10,7 @@
 
 #include "core/network/endpoint.hpp"
 #include "core/network/socket.hpp"
+#include "core/protocol/receive_result.hpp"
 
 class Connection {
 protected:
@@ -26,7 +27,8 @@ public:
     }
 
     Connection(const std::string& ip, int port)
-        : ID(0), ENDPOINT(ip, port) {
+        : ID(0),
+          ENDPOINT(ip, port) {
         std::cout
             << "[Connection] Created for "
             << ENDPOINT.getIPAddress()
@@ -35,8 +37,11 @@ public:
             << std::endl;
     }
 
-    Connection(uint64_t id, const std::string& ip, int port)
-        : ID(id), ENDPOINT(ip, port) {
+    Connection(uint64_t id,
+               const std::string& ip,
+               int port)
+        : ID(id),
+          ENDPOINT(ip, port) {
         std::cout
             << "[Connection] Created for "
             << ENDPOINT.getIPAddress()
@@ -45,7 +50,8 @@ public:
             << std::endl;
     }
 
-    Connection(int socket_fd, const sockaddr_in& addr)
+    Connection(int socket_fd,
+               const sockaddr_in& addr)
         : ID(0),
           ENDPOINT(addr),
           SOCKET(socket_fd) {
@@ -77,11 +83,17 @@ public:
             << std::endl;
     }
 
-    // Disable copy semantics
+    // =========================
+    // Copy Disabled
+    // =========================
+
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection&) = delete;
 
-    // Move constructor
+    // =========================
+    // Move Enabled
+    // =========================
+
     Connection(Connection&& other) noexcept
         : ID(other.ID),
           ENDPOINT(std::move(other.ENDPOINT)),
@@ -89,7 +101,6 @@ public:
         other.ID = 0;
     }
 
-    // Move assignment
     Connection& operator=(Connection&& other) noexcept {
         if (this != &other) {
             ID = other.ID;
@@ -159,6 +170,7 @@ public:
             std::cerr
                 << "[Connection] Invalid socket."
                 << std::endl;
+
             return false;
         }
 
@@ -176,11 +188,12 @@ public:
         size_t total = 0;
 
         while (total < message.size()) {
-            ssize_t sent = send(
-                SOCKET.getFD(),
-                message.data() + total,
-                message.size() - total,
-                0);
+            ssize_t sent =
+                send(
+                    SOCKET.getFD(),
+                    message.data() + total,
+                    message.size() - total,
+                    0);
 
             if (sent <= 0) {
                 std::cerr
@@ -206,31 +219,38 @@ public:
         return true;
     }
 
-    std::string receiveData() {
+    ReceiveResult receiveData() {
         if (!SOCKET.isValid()) {
             std::cerr
                 << "[Connection] Invalid socket."
                 << std::endl;
 
-            return "NOT-EXISTS";
+            return {
+                ReceiveStatus::InvalidSocket,
+                ""
+            };
         }
 
         char buffer[1024];
 
-        ssize_t bytes = recv(
-            SOCKET.getFD(),
-            buffer,
-            sizeof(buffer),
-            0);
+        ssize_t bytes =
+            recv(
+                SOCKET.getFD(),
+                buffer,
+                sizeof(buffer),
+                0);
 
-        if (bytes == -1) {
+        if (bytes < 0) {
             std::cerr
                 << "[Connection "
                 << ID
                 << "] recv() failed."
                 << std::endl;
 
-            return "FAILED";
+            return {
+                ReceiveStatus::Error,
+                ""
+            };
         }
 
         if (bytes == 0) {
@@ -243,7 +263,10 @@ public:
                 << ENDPOINT.getPort()
                 << std::endl;
 
-            return "DISCONNECTED";
+            return {
+                ReceiveStatus::Disconnected,
+                ""
+            };
         }
 
         std::cout
@@ -257,6 +280,9 @@ public:
             << ENDPOINT.getPort()
             << std::endl;
 
-        return std::string(buffer, bytes);
+        return {
+            ReceiveStatus::Success,
+            std::string(buffer, bytes)
+        };
     }
 };

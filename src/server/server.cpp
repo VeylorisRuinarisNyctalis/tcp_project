@@ -13,14 +13,10 @@ void Server::handleClient(Connection conn) {
         << std::endl;
 
     while (true) {
-        std::string request =
+        ReceiveResult result =
             conn.receiveData();
 
-        if (
-            request == "NOT-EXISTS" ||
-            request == "DISCONNECTED" ||
-            request == "FAILED") {
-
+        if (result.status != ReceiveStatus::Success) {
             std::cout
                 << "[Client "
                 << conn.getID()
@@ -29,6 +25,9 @@ void Server::handleClient(Connection conn) {
 
             break;
         }
+
+        std::string request =
+            result.data;
 
         std::cout
             << "[Client "
